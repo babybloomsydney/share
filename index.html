@@ -77,21 +77,25 @@
 </div>
 <script>
   // === CONFIG (REPLACE WITH YOUR GAS URL) ===
-  const API_URL = "https://script.google.com/macros/s/AKfycbwzya_s85Tn8MWBskGuV-7-w_e0CEXCuNkrJy9CWOf5fIFqt-y0-a7PQPWf7psTSh5BUQ/exec";  // From your pasted code; adjust if needed
+  const API_URL = "https://script.google.com/macros/s/AKfycby20aEBgcsUv4f-JauOQKM6Dn7wwou2fu2Rc6RRzR0B9rZcVCrawTv4v0QlZDiRxfU4ig/exec";  // Your GAS URL
 
   // === HELPER: SEND REQUEST TO GAS ===
   async function sendRequest(payload) {
     try {
+      console.log('Sending GAS request: ' + JSON.stringify(payload));  // NEW: Log payload
       const response = await fetch(API_URL, {
         method: 'POST',
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify(payload),
         redirect: "follow"
       });
+      console.log('GAS response code: ' + response.status);  // NEW: Log code
       if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
-      return await response.json();
+      const json = await response.json();
+      console.log('GAS response data: ' + JSON.stringify(json));  // NEW: Log response
+      return json;
     } catch (e) {
-      console.error("API Error:", e);
+      console.error("API Error: " + e.message);  // Log error
       throw new Error("Failed to fetch profile data. Please try again.");
     }
   }
@@ -101,6 +105,7 @@
     try {
       const urlParams = new URLSearchParams(window.location.search);
       const token = urlParams.get('token');
+      console.log('Extracted token: ' + (token ? '[provided]' : '[missing]'));  // NEW: Log token
       if (!token) throw new Error('No authentication token provided');
 
       // Fetch data via GAS (replaces param parsing)
@@ -114,6 +119,7 @@
       // Optional: Clear token from URL for security (prevents bookmarking)
       history.replaceState(null, '', window.location.pathname);
     } catch (err) {
+      console.error('Load error: ' + err.message);  // NEW: Log load error
       loader.innerHTML = `<div class="error">Error: ${err.message}</div>`;
     }
   });
