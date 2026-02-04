@@ -85,156 +85,188 @@
     <div id="data-loader" style="margin-top:20px; color:#666; display:none;">Fetching profile details...</div>
   </div>
   <script>
-    const WIX_VERIFY_URL = "https://www.babybloomsydney.com.au/_functions/verifyJobToken";
-    const GAS_DATA_URL = "https://script.google.com/macros/s/AKfycbyGjXWAwzlwnssUHhuwZlJM9fRG9vds927OdrCpWU6e1xtWrP4alVc8vbrpkLWV4-69TA/exec";
-    const WIX_HOME_URL = "https://www.babybloomsydney.com.au";
-    let globalContactId = null;
-    // 1. POLLING
-    window.addEventListener('DOMContentLoaded', async () => {
-        const params = new URLSearchParams(window.location.search);
-        const token = params.get('token');
-        if (!token) { denyAccess("Invalid Link"); return; }
-        let attempts = 0;
-        const pollToken = async () => {
-            try {
-                const response = await fetch(`${WIX_VERIFY_URL}?token=${token}`);
-                const data = await response.json();
-                if (data.valid === true && data.contactId) {
-                    grantAccess(data.contactId);
-                } else {
-                    if (++attempts < 8) setTimeout(pollToken, 1000);
-                    else denyAccess("Link Expired or Already Used");
-                }
-            } catch (err) {
-                if (++attempts < 8) setTimeout(pollToken, 1000);
-                else denyAccess("Connection Error");
-            }
-        };
-        pollToken();
-    });
-    // 2. GRANT ACCESS
-    function grantAccess(secureContactId) {
-        globalContactId = secureContactId;
-        const overlay = document.getElementById('security-overlay');
-        overlay.style.transition = "opacity 0.5s";
-        overlay.style.opacity = '0';
-        setTimeout(() => {
-            overlay.style.display = 'none';
-            document.getElementById('app-container').style.display = 'flex';
-            initializePage(secureContactId);
-        }, 500);
-    }
-    // 3. DENY ACCESS
-    function denyAccess(reason) {
-        document.getElementById('sec-spinner').style.display = 'none';
-        document.getElementById('sec-title').innerText = "Access Denied";
-        document.getElementById('sec-title').style.color = "#c0392b";
-        document.getElementById('sec-desc').innerHTML = `<strong>${reason}</strong><br>Redirecting...`;
-        setTimeout(() => { window.location.href = WIX_HOME_URL; }, 3000);
-    }
-    // 4. FETCH DATA + DECOMPRESS CLIENT-SIDE
-    async function initializePage(contactId) {
-        const loader = document.getElementById('data-loader');
-        loader.style.display = 'block';
-        try {
-            // A. Fetch Raw String from GAS
-            const gasRes = await fetch(GAS_DATA_URL, {
-                method: 'POST',
-                headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify({ action: "fetchNannyShareParam", contactId: contactId })
-            });
-            const response = await gasRes.json();
-           
-            if (response.status === 'success') {
-                // B. Client-Side Decompression (Your Original Logic)
-                try {
-                    const rawEncoded = response.encodedData;
-                    const base64Data = rawEncoded.replace(/-/g, '+').replace(/_/g, '/');
-                    const compressedData = atob(base64Data);
-                    const compressedArray = new Uint8Array(compressedData.length);
-                   
-                    for (let i = 0; i < compressedData.length; i++) {
-                        compressedArray[i] = compressedData.charCodeAt(i);
-                    }
-                   
-                    const jsonString = pako.inflate(compressedArray, { to: 'string' });
-                    const profileData = JSON.parse(jsonString);
-                   
-                    // Attach the ID since it might not be inside the compressed blob
-                    profileData.contactId = contactId;
-                   
-                    loader.style.display = 'none';
-                    renderPreview(profileData);
-                   
-                } catch (decodeErr) {
-                    throw new Error("Decompression failed: " + decodeErr.message);
-                }
-            } else {
-                 const debugMsg = response.debug ? ` (Checked: ${response.debug.sheetIdsSeen})` : '';
-                 throw new Error(response.message || "Profile not found" + debugMsg);
-            }
-        } catch (err) {
-            console.error(err);
-            loader.innerHTML = `<span style="color:red">Error: ${err.message}</span>`;
-        }
-    }
-    // 5. RENDER
-    function renderPreview(data) {
-        // Removed esc() for bio to allow <br> rendering; assume server-trusted data
-        const profilePic = data.profilePicture || 'https://randomuser.me/api/portraits/women/44.jpg';
-       
-        document.getElementById('profilePic').src = profilePic;
-        document.getElementById('userName').textContent = data.firstName;
-        document.getElementById('previewImage').src = data.nanny_ad || profilePic;
-        document.getElementById('previewTitle').textContent = `Experienced Nanny Available | ${data.suburb}`;
-        document.getElementById('previewDesc').textContent = `Hi, I'm ${data.firstName} and I'm now available to Nanny!`;
-       
-        const bio = data.bioNanny.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
-        document.getElementById('postText').innerHTML = `<p>${bio}</p>`;
+  const WIX_VERIFY_URL = "https://www.babybloomsydney.com.au/_functions/verifyJobToken";
+  const GAS_DATA_URL = "https://script.google.com/macros/s/AKfycbyGjXWAwzlwnssUHhuwZlJM9fRG9vds927OdrCpWU6e1xtWrP4alVc8vbrpkLWV4-69TA/exec";
+  const WIX_HOME_URL = "https://www.babybloomsydney.com.au";
+  let globalContactId = null;
+  // 1. POLLING
+  window.addEventListener('DOMContentLoaded', async () => {
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get('token');
+      if (!token) { denyAccess("Invalid Link"); return; }
+      let attempts = 0;
+      const pollToken = async () => {
+          try {
+              const response = await fetch(`${WIX_VERIFY_URL}?token=${token}`);
+              const data = await response.json();
+              if (data.valid === true && data.contactId) {
+                  grantAccess(data.contactId);
+              } else {
+                  if (++attempts < 8) setTimeout(pollToken, 1000);
+                  else denyAccess("Link Expired or Already Used");
+              }
+          } catch (err) {
+              if (++attempts < 8) setTimeout(pollToken, 1000);
+              else denyAccess("Connection Error");
+          }
+      };
+      pollToken();
+  });
+  // 2. GRANT ACCESS
+  function grantAccess(secureContactId) {
+      globalContactId = secureContactId;
+      const overlay = document.getElementById('security-overlay');
+      overlay.style.transition = "opacity 0.5s";
+      overlay.style.opacity = '0';
+      setTimeout(() => {
+          overlay.style.display = 'none';
+          document.getElementById('app-container').style.display = 'flex';
+          initializePage(secureContactId);
+      }, 500);
+  }
+  // 3. DENY ACCESS
+  function denyAccess(reason) {
+      document.getElementById('sec-spinner').style.display = 'none';
+      document.getElementById('sec-title').innerText = "Access Denied";
+      document.getElementById('sec-title').style.color = "#c0392b";
+      document.getElementById('sec-desc').innerHTML = `<strong>${reason}</strong><br>Redirecting...`;
+      setTimeout(() => { window.location.href = WIX_HOME_URL; }, 3000);
+  }
+  // 4. FETCH DATA + DECOMPRESS CLIENT-SIDE
+  async function initializePage(contactId) {
+      const loader = document.getElementById('data-loader');
+      loader.style.display = 'block';
+      try {
+          // A. Fetch Raw String from GAS
+          const gasRes = await fetch(GAS_DATA_URL, {
+              method: 'POST',
+              headers: { "Content-Type": "text/plain;charset=utf-8" },
+              body: JSON.stringify({ action: "fetchNannyShareParam", contactId: contactId })
+          });
+          const response = await gasRes.json();
+         
+          if (response.status === 'success') {
+              // B. Client-Side Decompression (Your Original Logic)
+              try {
+                  const rawEncoded = response.encodedData;
+                  const base64Data = rawEncoded.replace(/-/g, '+').replace(/_/g, '/');
+                  const compressedData = atob(base64Data);
+                  const compressedArray = new Uint8Array(compressedData.length);
+                 
+                  for (let i = 0; i < compressedData.length; i++) {
+                      compressedArray[i] = compressedData.charCodeAt(i);
+                  }
+                 
+                  const jsonString = pako.inflate(compressedArray, { to: 'string' });
+                  const profileData = JSON.parse(jsonString);
+                 
+                  // Attach the ID since it might not be inside the compressed blob
+                  profileData.contactId = contactId;
+                 
+                  loader.style.display = 'none';
+                  renderPreview(profileData);
+                 
+              } catch (decodeErr) {
+                  throw new Error("Decompression failed: " + decodeErr.message);
+              }
+          } else {
+               const debugMsg = response.debug ? ` (Checked: ${response.debug.sheetIdsSeen})` : '';
+               throw new Error(response.message || "Profile not found" + debugMsg);
+          }
+      } catch (err) {
+          console.error(err);
+          loader.innerHTML = `<span style="color:red">Error: ${err.message}</span>`;
+      }
+  }
+  // 5. RENDER
+  function renderPreview(data) {
+      // Removed esc() for bio to allow <br> rendering; assume server-trusted data
+      const profilePic = data.profilePicture || 'https://randomuser.me/api/portraits/women/44.jpg';
+     
+      document.getElementById('profilePic').src = profilePic;
+      document.getElementById('userName').textContent = data.firstName;
+      document.getElementById('previewImage').src = data.nanny_ad || profilePic;
+      document.getElementById('previewTitle').textContent = `Experienced Nanny Available | ${data.suburb}`;
+      document.getElementById('previewDesc').textContent = `Hi, I'm ${data.firstName} and I'm now available to Nanny!`;
+     
+      const bio = data.bioNanny.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
+      document.getElementById('postText').innerHTML = `<p>${bio}</p>`;
 
-        // Show elements only after rendering
-        document.querySelector('.copy-container').style.display = 'flex';
-        document.querySelector('.fb-post').style.display = 'block';
-    }
-    // 6. ACTIONS
-    document.getElementById('copyBtn').addEventListener('click', async (e) => {
-        const postEl = document.getElementById('postText');
-        const clone = postEl.cloneNode(true);
-        clone.innerHTML = clone.innerHTML.replace(/<br\s*\/?>/gi, '\n');
-        const text = clone.textContent.trim();
-        await navigator.clipboard.writeText(text);
-        btnFeedback(e.target, 'Copied!', 'Copy Post');
-    });
-    document.getElementById('shareBtn').addEventListener('click', async (e) => {
-        if (!globalContactId) return;
-        const url = `https://babybloomsydney.com.au/nanny/${globalContactId}`;
-        const data = {
-            title: document.getElementById('previewTitle').textContent,
-            text: document.getElementById('previewDesc').textContent,
-            url: url
-        };
-        try { 
-            await navigator.share(data); 
-            btnFeedback(e.target, 'Shared!', 'Share Profile');
-            document.getElementById('returnBtn').style.display = 'inline-block';
-        }
-        catch (e) { 
-            await navigator.clipboard.writeText(url); 
-            btnFeedback(e.target, 'URL Copied!', 'Share Profile');
-            // Do not show returnBtn on fallback or cancel
-        }
-    });
-    document.getElementById('returnBtn').addEventListener('click', () => {
-        if (globalContactId) window.location.href = `https://babybloomsydney.com.au/nanny/${globalContactId}`;
-    });
-    function btnFeedback(btn, active, reset) {
-        btn.textContent = active;
-        btn.classList.add('copied');
-        setTimeout(() => {
-            btn.textContent = reset;
-            btn.classList.remove('copied');
-        }, 1000);
-    }
-  </script>
+      // Show elements only after rendering
+      document.querySelector('.copy-container').style.display = 'flex';
+      document.querySelector('.fb-post').style.display = 'block';
+  }
+  // 6. ACTIONS
+  document.getElementById('copyBtn').addEventListener('click', async (e) => {
+      const postEl = document.getElementById('postText');
+      const clone = postEl.cloneNode(true);
+      clone.innerHTML = clone.innerHTML.replace(/<br\s*\/?>/gi, '\n');
+      const text = clone.textContent.trim();
+      await navigator.clipboard.writeText(text);
+      btnFeedback(e.target, 'Copied!', 'Copy Post');
+  });
+  document.getElementById('shareBtn').addEventListener('click', async (e) => {
+      if (!globalContactId) return;
+      const url = `https://babybloomsydney.com.au/nanny/${globalContactId}`;
+      const data = {
+          title: document.getElementById('previewTitle').textContent,
+          text: document.getElementById('previewDesc').textContent,
+          url: url
+      };
+      try { 
+          await navigator.share(data); 
+          btnFeedback(e.target, 'Shared!', 'Share Profile');
+          document.getElementById('returnBtn').style.display = 'inline-block';
+
+          // NEW: Send HTTP POST to Make.com webhook on successful share
+          // Get Sydney timestamp (YYYY-MM-DD HH:MM:SS format)
+          const sydneyTime = new Intl.DateTimeFormat('en-AU', {
+            timeZone: 'Australia/Sydney',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+          }).format(new Date()).replace(/\//g, '-').replace(',', '');
+
+          const payload = {
+            contactId: globalContactId,
+            type: "Nanny",
+            log: "initiateShareProfile",
+            comment: "fbPost",
+            Timestamp: sydneyTime
+          };
+
+          fetch('https://hook.eu2.make.com/tcqadoblcotjipjmlo62ozbn1elo53u3', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          })
+          .then(response => {
+            if (!response.ok) console.error('Webhook failed:', response.status);
+          })
+          .catch(err => console.error('Webhook error:', err));
+
+      }
+      catch (e) { 
+          await navigator.clipboard.writeText(url); 
+          btnFeedback(e.target, 'URL Copied!', 'Share Profile');
+          // Do not show returnBtn on fallback or cancel
+      }
+  });
+  document.getElementById('returnBtn').addEventListener('click', () => {
+      if (globalContactId) window.location.href = `https://babybloomsydney.com.au/nanny/${globalContactId}`;
+  });
+  function btnFeedback(btn, active, reset) {
+      btn.textContent = active;
+      btn.classList.add('copied');
+      setTimeout(() => {
+          btn.textContent = reset;
+          btn.classList.remove('copied');
+      }, 1000);
+  }
+</script>
 </body>
 </html>
