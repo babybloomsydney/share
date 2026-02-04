@@ -4,42 +4,33 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Nanny Profile Preview</title>
+  <!-- ADDED PAKO BACK -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
   <style>
-    /* === BASE STYLES === */
     body { background: #f0f2f5; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; margin: 0; padding: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
-
-    /* === SECURITY OVERLAY === */
     #security-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #ffffff; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
     .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #1877F2; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 20px; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     #sec-title { font-size: 20px; font-weight: bold; margin-bottom: 10px; color: #333; }
     #sec-desc { font-size: 14px; color: #666; max-width: 400px; line-height: 1.5; }
-
-    /* === APP CONTAINER === */
     #app-container { display: none; width: 100%; max-width: 550px; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; }
-
-    /* === FB STYLES === */
     .copy-container { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: nowrap; overflow-x: auto; white-space: nowrap; width: 100%; justify-content: center; }
     .copy-btn, .share-btn, .return-btn { background: #1877F2; color: white; border: none; padding: 8px 12px; font-size: 13px; font-weight: 600; border-radius: 6px; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,.1); transition: background .2s ease; }
     .copy-btn:hover, .share-btn:hover, .return-btn:hover { background: #1666d1; }
     .copy-btn.copied, .share-btn.copied, .return-btn.copied { background: #4B8BF4; }
-
     .fb-post { width: 500px; max-width: 100%; border: 1px solid #ddd; border-radius: 8px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.1); }
     .fb-header { display: flex; align-items: center; padding: 12px; }
     .fb-header img { width: 40px; height: 40px; border-radius: 50%; margin-right: 10px; object-fit: cover; }
     .fb-header .fb-user-name { font-weight: bold; font-size: 14px; color: #050505; }
     .fb-header .fb-time { font-size: 12px; color: #65676b; }
-    
     .fb-content { padding: 0 12px 12px; font-size: 14px; line-height: 1.45; color: #050505; }
     .fb-content p { margin: 0; word-break: break-word; }
-    
     .fb-link-preview { border: 1px solid #ddd; border-radius: 6px; margin: 12px; overflow: hidden; background: #f8f9fa; cursor: pointer; }
     .fb-link-preview img { width: 100%; display: block; object-fit: cover; aspect-ratio: 1.91/1; }
     .fb-link-text { padding: 10px 12px; border-top: 1px solid #ddd; background: #f0f2f5; }
     .fb-link-text .domain { font-size: 12px; color: #65676b; text-transform: uppercase; margin-bottom: 2px; }
     .fb-link-text .title { font-weight: bold; font-size: 16px; color: #050505; margin-bottom: 2px; line-height: 1.2; }
     .fb-link-text .description { font-size: 13px; color: #65676b; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-
     .fb-reactions-bar { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-top: 1px solid #ddd; font-size: 13px; color: #65676b; }
     .fb-reactions { display: inline-flex; align-items: center; gap: 5px; }
     .reaction-icons-img { width: 38px; height: 18px; }
@@ -49,7 +40,6 @@
   </style>
 </head>
 <body>
-
   <div id="security-overlay">
     <div class="spinner" id="sec-spinner"></div>
     <div id="sec-title">Verifying Access</div>
@@ -93,29 +83,25 @@
         <div>Like</div><div>Comment</div><div>Share</div>
       </div>
     </div>
-
     <div id="data-loader" style="margin-top:20px; color:#666; display:none;">Fetching profile details...</div>
   </div>
 
   <script>
-    // === CONFIG ===
     const WIX_VERIFY_URL = "https://www.babybloomsydney.com.au/_functions/verifyJobToken";
-    const GAS_DATA_URL = "https://script.google.com/macros/s/AKfycbzdJks0FiQhoafWKd-ceHjnjF5TDpQLiq_SYg_h6lJ9Ogy_OB4nLfacTAsWYvpCAKdBZg/exec"; 
+    const GAS_DATA_URL = "https://script.google.com/macros/s/AKfycbyGjXWAwzlwnssUHhuwZlJM9fRG9vds927OdrCpWU6e1xtWrP4alVc8vbrpkLWV4-69TA/exec"; 
     const WIX_HOME_URL = "https://www.babybloomsydney.com.au";
     let globalContactId = null;
 
-    // === 1. POLLING LOGIC ===
+    // 1. POLLING
     window.addEventListener('DOMContentLoaded', async () => {
         const params = new URLSearchParams(window.location.search);
         const token = params.get('token');
         if (!token) { denyAccess("Invalid Link"); return; }
-
         let attempts = 0;
         const pollToken = async () => {
             try {
                 const response = await fetch(`${WIX_VERIFY_URL}?token=${token}`);
                 const data = await response.json();
-
                 if (data.valid === true && data.contactId) {
                     grantAccess(data.contactId);
                 } else {
@@ -130,7 +116,7 @@
         pollToken();
     });
 
-    // === 2. TRANSITIONS ===
+    // 2. GRANT ACCESS
     function grantAccess(secureContactId) {
         globalContactId = secureContactId;
         const overlay = document.getElementById('security-overlay');
@@ -143,6 +129,7 @@
         }, 500);
     }
 
+    // 3. DENY ACCESS
     function denyAccess(reason) {
         document.getElementById('sec-spinner').style.display = 'none';
         document.getElementById('sec-title').innerText = "Access Denied";
@@ -151,30 +138,48 @@
         setTimeout(() => { window.location.href = WIX_HOME_URL; }, 3000);
     }
 
-    // === 3. FETCH DATA (CRITICAL HEADER FIX) ===
+    // 4. FETCH DATA + DECOMPRESS CLIENT-SIDE
     async function initializePage(contactId) {
         const loader = document.getElementById('data-loader');
         loader.style.display = 'block';
 
         try {
+            // A. Fetch Raw String from GAS
             const gasRes = await fetch(GAS_DATA_URL, {
                 method: 'POST',
-                // *** THIS HEADER IS CRITICAL FOR YOUR doPost TO WORK ***
-                headers: { "Content-Type": "text/plain;charset=utf-8" }, 
-                // Note: We use text/plain to avoid CORS OPTIONS request, 
-                // BUT we updated doPost to be smart enough to parse it anyway.
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
                 body: JSON.stringify({ action: "fetchNannyShareParam", contactId: contactId })
             });
 
             const response = await gasRes.json();
             
             if (response.status === 'success') {
-                loader.style.display = 'none';
-                renderPreview(response.data);
+                // B. Client-Side Decompression (Your Original Logic)
+                try {
+                    const rawEncoded = response.encodedData;
+                    const base64Data = rawEncoded.replace(/-/g, '+').replace(/_/g, '/');
+                    const compressedData = atob(base64Data);
+                    const compressedArray = new Uint8Array(compressedData.length);
+                    
+                    for (let i = 0; i < compressedData.length; i++) {
+                        compressedArray[i] = compressedData.charCodeAt(i);
+                    }
+                    
+                    const jsonString = pako.inflate(compressedArray, { to: 'string' });
+                    const profileData = JSON.parse(jsonString);
+                    
+                    // Attach the ID since it might not be inside the compressed blob
+                    profileData.contactId = contactId;
+                    
+                    loader.style.display = 'none';
+                    renderPreview(profileData);
+                    
+                } catch (decodeErr) {
+                    throw new Error("Decompression failed: " + decodeErr.message);
+                }
             } else {
-                // Pass debug info if available
-                const debugMsg = response.debug ? ` (Checked: ${response.debug.sheetIdsSeen})` : '';
-                throw new Error(response.message || "Profile not found" + debugMsg);
+                 const debugMsg = response.debug ? ` (Checked: ${response.debug.sheetIdsSeen})` : '';
+                 throw new Error(response.message || "Profile not found" + debugMsg);
             }
         } catch (err) {
             console.error(err);
@@ -182,7 +187,7 @@
         }
     }
 
-    // === 4. RENDER ===
+    // 5. RENDER
     function renderPreview(data) {
         const esc = (t) => t ? t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : '';
         const profilePic = data.profilePicture || 'https://randomuser.me/api/portraits/women/44.jpg';
@@ -197,7 +202,7 @@
         document.getElementById('postText').innerHTML = `<p>${bio}</p>`;
     }
 
-    // === 5. ACTIONS ===
+    // 6. ACTIONS
     document.getElementById('copyBtn').addEventListener('click', async (e) => {
         const postEl = document.getElementById('postText');
         const clone = postEl.cloneNode(true);
