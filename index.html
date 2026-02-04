@@ -76,26 +76,48 @@
   </div>
 </div>
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
+  // === CONFIG (REPLACE WITH YOUR GAS URL) ===
+  const API_URL = "https://script.google.com/macros/s/AKfycbxFmxs-D-GTiPMcb24gtZuyPQffDNTFEOtGKvvn3bx_DWj19lyPyw6_iELSJ1oz3KNLAg/exec";  // From your pasted code; adjust if needed
+
+  // === HELPER: SEND REQUEST TO GAS ===
+  async function sendRequest(payload) {
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload),
+        redirect: "follow"
+      });
+      if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+      return await response.json();
+    } catch (e) {
+      console.error("API Error:", e);
+      throw new Error("Failed to fetch profile data. Please try again.");
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', async () => {
     const loader = document.getElementById('loader');
     try {
       const urlParams = new URLSearchParams(window.location.search);
-      const dataParam = urlParams.get('data');
-      if (!dataParam) throw new Error('No data in URL');
-      const base64Data = dataParam.replace(/-/g, '+').replace(/_/g, '/');
-      const compressedData = atob(base64Data);
-      const compressedArray = new Uint8Array(compressedData.length);
-      for (let i = 0; i < compressedData.length; i++) {
-        compressedArray[i] = compressedData.charCodeAt(i);
-      }
-      const jsonString = pako.inflate(compressedArray, { to: 'string' });
-      const data = JSON.parse(jsonString);
-      if (!data.contactId) throw new Error('Invalid data');
+      const token = urlParams.get('token');
+      if (!token) throw new Error('No authentication token provided');
+
+      // Fetch data via GAS (replaces param parsing)
+      const res = await sendRequest({ action: "verifyTokenAndFetchParams", token });
+      if (res.status !== 'success') throw new Error(res.message || 'Invalid or expired token');
+      const data = res.data;
+      if (!data.contactId) throw new Error('Invalid profile data');
+
       renderPreview(data);
+
+      // Optional: Clear token from URL for security (prevents bookmarking)
+      history.replaceState(null, '', window.location.pathname);
     } catch (err) {
       loader.innerHTML = `<div class="error">Error: ${err.message}</div>`;
     }
   });
+
   function renderPreview(data) {
     document.getElementById('loader').remove();
     document.querySelector('.copy-container').style.display = 'flex';
@@ -159,20 +181,9 @@
     e.preventDefault();
     let contactId = '';
     try {
-      const urlParams = new URLSearchParams(window.location.search);
-      const dataParam = urlParams.get('data');
-      if (dataParam) {
-        const base64Data = dataParam.replace(/-/g, '+').replace(/_/g, '/');
-        const compressedData = atob(base64Data);
-        const compressedArray = new Uint8Array(compressedData.length);
-        for (let i = 0; i < compressedData.length; i++) {
-          compressedArray[i] = compressedData.charCodeAt(i);
-        }
-        const jsonString = pako.inflate(compressedArray, { to: 'string' });
-        const data = JSON.parse(jsonString);
-        contactId = data.contactId;
-      }
-    } catch (e) {}
+      // Fetch contactId from rendered data (no need to re-fetch)
+      contactId = document.querySelector('meta[property="og:url"]').content.split('/').pop();
+    } catch (err) {}
     const nannyUrl = `https://babybloomsydney.com.au/nanny/${contactId}`;
     const shareData = {
       title: document.getElementById('previewTitle').textContent,
@@ -208,20 +219,9 @@
   document.getElementById('returnBtn').addEventListener('click', (e) => {
     let contactId = '';
     try {
-      const urlParams = new URLSearchParams(window.location.search);
-      const dataParam = urlParams.get('data');
-      if (dataParam) {
-        const base64Data = dataParam.replace(/-/g, '+').replace(/_/g, '/');
-        const compressedData = atob(base64Data);
-        const compressedArray = new Uint8Array(compressedData.length);
-        for (let i = 0; i < compressedData.length; i++) {
-          compressedArray[i] = compressedData.charCodeAt(i);
-        }
-        const jsonString = pako.inflate(compressedArray, { to: 'string' });
-        const data = JSON.parse(jsonString);
-        contactId = data.contactId;
-      }
-    } catch (e) {}
+      // Fetch contactId from rendered data (no need to re-parse)
+      contactId = document.querySelector('meta[property="og:url"]').content.split('/').pop();
+    } catch (err) {}
     window.location.href = `https://babybloomsydney.com.au/nanny/${contactId}`;
   });
 </script>
