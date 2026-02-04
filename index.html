@@ -5,24 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Nanny Profile Preview</title>
   <style>
+    /* === BASE STYLES === */
     body { background: #f0f2f5; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; margin: 0; padding: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
-    
-    /* Security Overlay */
+
+    /* === SECURITY OVERLAY === */
     #security-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #ffffff; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
     .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #1877F2; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 20px; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     #sec-title { font-size: 20px; font-weight: bold; margin-bottom: 10px; color: #333; }
     #sec-desc { font-size: 14px; color: #666; max-width: 400px; line-height: 1.5; }
 
-    /* App Container */
+    /* === APP CONTAINER === */
     #app-container { display: none; width: 100%; max-width: 550px; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; }
-    
-    /* FB Post Styles */
+
+    /* === FB STYLES === */
     .copy-container { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: nowrap; overflow-x: auto; white-space: nowrap; width: 100%; justify-content: center; }
-    .copy-btn, .share-btn, .return-btn { background: #1877F2; color: white; border: none; padding: 8px 12px; font-size: 13px; font-weight: 600; border-radius: 6px; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,.1); }
+    .copy-btn, .share-btn, .return-btn { background: #1877F2; color: white; border: none; padding: 8px 12px; font-size: 13px; font-weight: 600; border-radius: 6px; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,.1); transition: background .2s ease; }
     .copy-btn:hover, .share-btn:hover, .return-btn:hover { background: #1666d1; }
-    .copy-btn.copied { background: #4B8BF4; }
-    
+    .copy-btn.copied, .share-btn.copied, .return-btn.copied { background: #4B8BF4; }
+
     .fb-post { width: 500px; max-width: 100%; border: 1px solid #ddd; border-radius: 8px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.1); }
     .fb-header { display: flex; align-items: center; padding: 12px; }
     .fb-header img { width: 40px; height: 40px; border-radius: 50%; margin-right: 10px; object-fit: cover; }
@@ -32,34 +33,30 @@
     .fb-content { padding: 0 12px 12px; font-size: 14px; line-height: 1.45; color: #050505; }
     .fb-content p { margin: 0; word-break: break-word; }
     
-    .fb-link-preview { border: 1px solid #ddd; border-radius: 6px; margin: 12px; overflow: hidden; background: #f8f9fa; }
+    .fb-link-preview { border: 1px solid #ddd; border-radius: 6px; margin: 12px; overflow: hidden; background: #f8f9fa; cursor: pointer; }
     .fb-link-preview img { width: 100%; display: block; object-fit: cover; aspect-ratio: 1.91/1; }
     .fb-link-text { padding: 10px 12px; border-top: 1px solid #ddd; background: #f0f2f5; }
     .fb-link-text .domain { font-size: 12px; color: #65676b; text-transform: uppercase; margin-bottom: 2px; }
-    .fb-link-text .title { font-weight: bold; font-size: 16px; color: #050505; margin-bottom: 2px; }
+    .fb-link-text .title { font-weight: bold; font-size: 16px; color: #050505; margin-bottom: 2px; line-height: 1.2; }
     .fb-link-text .description { font-size: 13px; color: #65676b; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 
     .fb-reactions-bar { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-top: 1px solid #ddd; font-size: 13px; color: #65676b; }
     .fb-reactions { display: inline-flex; align-items: center; gap: 5px; }
     .reaction-icons-img { width: 38px; height: 18px; }
     .fb-footer { display: flex; justify-content: space-around; border-top: 1px solid #ddd; padding: 4px 0; }
-    .fb-footer div { padding: 6px 0; text-align: center; flex: 1; font-size: 14px; font-weight: 600; color: #65676b; cursor: pointer; }
+    .fb-footer div { padding: 6px 0; text-align: center; flex: 1; font-size: 14px; font-weight: 600; color: #65676b; cursor: pointer; border-radius: 4px; margin: 0 4px; }
     .fb-footer div:hover { background: #f2f2f2; }
-    
-    #data-loader { margin-top: 20px; color: #666; font-size: 14px; }
   </style>
 </head>
 <body>
 
-  <!-- SECURITY OVERLAY -->
   <div id="security-overlay">
     <div class="spinner" id="sec-spinner"></div>
     <div id="sec-title">Verifying Access</div>
     <div id="sec-desc">Please wait while we validate your secure link...</div>
   </div>
 
-  <!-- APP CONTAINER -->
-  <div id="app-container">
+  <div id="app-container"> 
     <div class="copy-container">
       <button class="copy-btn" id="copyBtn">Copy Post</button>
       <button class="share-btn" id="shareBtn">Share Profile</button>
@@ -70,17 +67,19 @@
       <div class="fb-header">
         <img id="profilePic" src="" alt="Profile">
         <div>
-          <div class="fb-user-name" id="userName">...</div>
+          <div class="fb-user-name" id="userName">Loading Name...</div>
           <div class="fb-time">Just now</div>
         </div>
       </div>
-      <div class="fb-content" id="postText"><p>...</p></div>
+      <div class="fb-content" id="postText">
+        <p>Loading bio information...</p>
+      </div>
       <div class="fb-link-preview">
         <img id="previewImage" src="" alt="Preview">
         <div class="fb-link-text">
           <div class="domain">BABYBLOOMSYDNEY.COM.AU</div>
-          <div class="title" id="previewTitle">...</div>
-          <div class="description" id="previewDesc">...</div>
+          <div class="title" id="previewTitle">Loading Title...</div>
+          <div class="description" id="previewDesc">Loading Description...</div>
         </div>
       </div>
       <div class="fb-reactions-bar">
@@ -94,16 +93,18 @@
         <div>Like</div><div>Comment</div><div>Share</div>
       </div>
     </div>
-    <div id="data-loader">Fetching profile...</div>
+
+    <div id="data-loader" style="margin-top:20px; color:#666; display:none;">Fetching profile details...</div>
   </div>
 
   <script>
+    // === CONFIG ===
     const WIX_VERIFY_URL = "https://www.babybloomsydney.com.au/_functions/verifyJobToken";
-    const GAS_DATA_URL = "https://script.google.com/macros/s/AKfycbwOQdl49EEKZsWI3C1jTRCC6ticFi1yF8HnSuScIzT0R9_WmaNuznuc_NDIEQB_Cgfq/exec"; 
+    const GAS_DATA_URL = "https://script.google.com/macros/s/AKfycby2Oc6Ywz0901pDjFm-5yXAPT6gL5UOdj9InFMtwL-wOhuFGFOIfQqo6ZMf9QdeG05Ndg/exec"; 
     const WIX_HOME_URL = "https://www.babybloomsydney.com.au";
     let globalContactId = null;
 
-    // 1. POLLING
+    // === 1. POLLING LOGIC ===
     window.addEventListener('DOMContentLoaded', async () => {
         const params = new URLSearchParams(window.location.search);
         const token = params.get('token');
@@ -114,6 +115,7 @@
             try {
                 const response = await fetch(`${WIX_VERIFY_URL}?token=${token}`);
                 const data = await response.json();
+
                 if (data.valid === true && data.contactId) {
                     grantAccess(data.contactId);
                 } else {
@@ -128,19 +130,19 @@
         pollToken();
     });
 
-    // 2. GRANT ACCESS
-    function grantAccess(contactId) {
-        globalContactId = contactId;
+    // === 2. TRANSITIONS ===
+    function grantAccess(secureContactId) {
+        globalContactId = secureContactId;
         const overlay = document.getElementById('security-overlay');
+        overlay.style.transition = "opacity 0.5s";
         overlay.style.opacity = '0';
         setTimeout(() => {
             overlay.style.display = 'none';
             document.getElementById('app-container').style.display = 'flex';
-            initializePage(contactId);
+            initializePage(secureContactId);
         }, 500);
     }
 
-    // 3. DENY ACCESS
     function denyAccess(reason) {
         document.getElementById('sec-spinner').style.display = 'none';
         document.getElementById('sec-title').innerText = "Access Denied";
@@ -149,38 +151,45 @@
         setTimeout(() => { window.location.href = WIX_HOME_URL; }, 3000);
     }
 
-    // 4. FETCH DATA
+    // === 3. FETCH DATA (CRITICAL HEADER FIX) ===
     async function initializePage(contactId) {
         const loader = document.getElementById('data-loader');
+        loader.style.display = 'block';
+
         try {
-            const res = await fetch(GAS_DATA_URL, {
+            const gasRes = await fetch(GAS_DATA_URL, {
                 method: 'POST',
+                // *** THIS HEADER IS CRITICAL FOR YOUR doPost TO WORK ***
+                headers: { "Content-Type": "text/plain;charset=utf-8" }, 
+                // Note: We use text/plain to avoid CORS OPTIONS request, 
+                // BUT we updated doPost to be smart enough to parse it anyway.
                 body: JSON.stringify({ action: "fetchNannyShareParam", contactId: contactId })
             });
-            const json = await res.json();
-            
-            // Log full debug info to console for you to see
-            console.log("GAS Response:", json); 
 
-            if (json.status === 'success') {
+            const response = await gasRes.json();
+            
+            if (response.status === 'success') {
                 loader.style.display = 'none';
-                renderPreview(json.data);
+                renderPreview(response.data);
             } else {
-                throw new Error(json.message + (json.debug ? ` (Checked: ${json.debug.sheetIdsSeen})` : ''));
+                // Pass debug info if available
+                const debugMsg = response.debug ? ` (Checked: ${response.debug.sheetIdsSeen})` : '';
+                throw new Error(response.message || "Profile not found" + debugMsg);
             }
         } catch (err) {
-            loader.innerHTML = `<span style="color:red">Error: ${err.message}</span>`;
             console.error(err);
+            loader.innerHTML = `<span style="color:red">Error: ${err.message}</span>`;
         }
     }
 
-    // 5. RENDER
+    // === 4. RENDER ===
     function renderPreview(data) {
         const esc = (t) => t ? t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : '';
+        const profilePic = data.profilePicture || 'https://randomuser.me/api/portraits/women/44.jpg';
         
-        document.getElementById('profilePic').src = data.profilePicture || '';
+        document.getElementById('profilePic').src = profilePic;
         document.getElementById('userName').textContent = data.firstName;
-        document.getElementById('previewImage').src = data.nanny_ad || data.profilePicture || '';
+        document.getElementById('previewImage').src = data.nanny_ad || profilePic;
         document.getElementById('previewTitle').textContent = `Experienced Nanny Available | ${data.suburb}`;
         document.getElementById('previewDesc').textContent = `Hi, I'm ${data.firstName} and I'm now available to Nanny!`;
         
@@ -188,7 +197,7 @@
         document.getElementById('postText').innerHTML = `<p>${bio}</p>`;
     }
 
-    // 6. BUTTONS
+    // === 5. ACTIONS ===
     document.getElementById('copyBtn').addEventListener('click', async (e) => {
         const postEl = document.getElementById('postText');
         const clone = postEl.cloneNode(true);
@@ -208,7 +217,7 @@
         };
         try { await navigator.share(data); } 
         catch (e) { await navigator.clipboard.writeText(url); }
-        btnFeedback(e.target, 'Shared/Copied!', 'Share Profile');
+        btnFeedback(e.target, 'Shared!', 'Share Profile');
         document.getElementById('returnBtn').style.display = 'inline-block';
     });
 
@@ -218,7 +227,11 @@
 
     function btnFeedback(btn, active, reset) {
         btn.textContent = active;
-        setTimeout(() => btn.textContent = reset, 1000);
+        btn.classList.add('copied');
+        setTimeout(() => {
+            btn.textContent = reset;
+            btn.classList.remove('copied');
+        }, 1000);
     }
   </script>
 </body>
