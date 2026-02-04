@@ -101,6 +101,7 @@
   <script>
     // === CONFIG ===
     const WIX_VERIFY_URL = "https://www.babybloomsydney.com.au/_functions/verifyJobToken";
+    // UPDATED GAS URL
     const GAS_DATA_URL = "https://script.google.com/macros/s/AKfycbyGjXWAwzlwnssUHhuwZlJM9fRG9vds927OdrCpWU6e1xtWrP4alVc8vbrpkLWV4-69TA/exec"; 
     const WIX_HOME_URL = "https://www.babybloomsydney.com.au";
     let globalContactId = null;
@@ -143,7 +144,8 @@
             // Fetch Raw String from GAS
             const gasRes = await fetch(GAS_DATA_URL, {
                 method: 'POST',
-                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                // === HEADER MUST BE application/json ===
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ action: "fetchNannyShareParam", contactId: contactId })
             });
 
