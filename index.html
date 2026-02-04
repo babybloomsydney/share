@@ -5,56 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Nanny Profile Preview</title>
   <style>
-    /* === BASE STYLES === */
-    body {
-      background: #f0f2f5;
-      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    /* === SECURITY OVERLAY STYLES (From your polling logic) === */
-    #security-overlay {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: #ffffff; z-index: 9999;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      text-align: center; padding: 20px;
-    }
-    .spinner {
-      border: 4px solid #f3f3f3; border-top: 4px solid #1877F2;
-      border-radius: 50%; width: 40px; height: 40px;
-      animation: spin 1s linear infinite; margin-bottom: 20px;
-    }
+    body { background: #f0f2f5; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; margin: 0; padding: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+    
+    /* Security Overlay */
+    #security-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #ffffff; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
+    .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #1877F2; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 20px; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     #sec-title { font-size: 20px; font-weight: bold; margin-bottom: 10px; color: #333; }
     #sec-desc { font-size: 14px; color: #666; max-width: 400px; line-height: 1.5; }
 
-    /* === APP CONTAINER (Hidden until Auth) === */
-    #app-container {
-      display: none; /* Hidden by default */
-      width: 100%;
-      max-width: 550px;
-      padding: 20px;
-      box-sizing: border-box;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    /* === FACEBOOK PREVIEW STYLES === */
+    /* App Container */
+    #app-container { display: none; width: 100%; max-width: 550px; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; }
+    
+    /* FB Post Styles */
     .copy-container { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: nowrap; overflow-x: auto; white-space: nowrap; width: 100%; justify-content: center; }
-    .copy-btn, .share-btn, .return-btn {
-      background: #1877F2; color: white; border: none; padding: 8px 12px; font-size: 13px; font-weight: 600;
-      border-radius: 6px; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,.1); transition: background .2s ease;
-    }
+    .copy-btn, .share-btn, .return-btn { background: #1877F2; color: white; border: none; padding: 8px 12px; font-size: 13px; font-weight: 600; border-radius: 6px; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,.1); }
     .copy-btn:hover, .share-btn:hover, .return-btn:hover { background: #1666d1; }
-    .copy-btn.copied, .share-btn.copied, .return-btn.copied { background: #4B8BF4; }
-
+    .copy-btn.copied { background: #4B8BF4; }
+    
     .fb-post { width: 500px; max-width: 100%; border: 1px solid #ddd; border-radius: 8px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.1); }
     .fb-header { display: flex; align-items: center; padding: 12px; }
     .fb-header img { width: 40px; height: 40px; border-radius: 50%; margin-right: 10px; object-fit: cover; }
@@ -64,31 +32,35 @@
     .fb-content { padding: 0 12px 12px; font-size: 14px; line-height: 1.45; color: #050505; }
     .fb-content p { margin: 0; word-break: break-word; }
     
-    .fb-link-preview { border: 1px solid #ddd; border-radius: 6px; margin: 12px; overflow: hidden; background: #f8f9fa; cursor: pointer; }
+    .fb-link-preview { border: 1px solid #ddd; border-radius: 6px; margin: 12px; overflow: hidden; background: #f8f9fa; }
     .fb-link-preview img { width: 100%; display: block; object-fit: cover; aspect-ratio: 1.91/1; }
     .fb-link-text { padding: 10px 12px; border-top: 1px solid #ddd; background: #f0f2f5; }
     .fb-link-text .domain { font-size: 12px; color: #65676b; text-transform: uppercase; margin-bottom: 2px; }
-    .fb-link-text .title { font-weight: bold; font-size: 16px; color: #050505; margin-bottom: 2px; line-height: 1.2; }
-    .fb-link-text .description { font-size: 13px; color: #65676b; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+    .fb-link-text .title { font-weight: bold; font-size: 16px; color: #050505; margin-bottom: 2px; }
+    .fb-link-text .description { font-size: 13px; color: #65676b; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 
     .fb-reactions-bar { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-top: 1px solid #ddd; font-size: 13px; color: #65676b; }
     .fb-reactions { display: inline-flex; align-items: center; gap: 5px; }
     .reaction-icons-img { width: 38px; height: 18px; }
-    
     .fb-footer { display: flex; justify-content: space-around; border-top: 1px solid #ddd; padding: 4px 0; }
-    .fb-footer div { padding: 6px 0; text-align: center; flex: 1; font-size: 14px; font-weight: 600; color: #65676b; cursor: pointer; border-radius: 4px; margin: 0 4px; }
+    .fb-footer div { padding: 6px 0; text-align: center; flex: 1; font-size: 14px; font-weight: 600; color: #65676b; cursor: pointer; }
     .fb-footer div:hover { background: #f2f2f2; }
+    
+    #data-loader { margin-top: 20px; color: #666; font-size: 14px; }
   </style>
 </head>
 <body>
 
+  <!-- SECURITY OVERLAY -->
   <div id="security-overlay">
     <div class="spinner" id="sec-spinner"></div>
     <div id="sec-title">Verifying Access</div>
     <div id="sec-desc">Please wait while we validate your secure link...</div>
   </div>
 
-  <div id="app-container" style="display:none;"> <div class="copy-container">
+  <!-- APP CONTAINER -->
+  <div id="app-container">
+    <div class="copy-container">
       <button class="copy-btn" id="copyBtn">Copy Post</button>
       <button class="share-btn" id="shareBtn">Share Profile</button>
       <button class="return-btn" id="returnBtn" style="display:none;">Return To Profile</button>
@@ -98,24 +70,19 @@
       <div class="fb-header">
         <img id="profilePic" src="" alt="Profile">
         <div>
-          <div class="fb-user-name" id="userName">Loading Name...</div>
+          <div class="fb-user-name" id="userName">...</div>
           <div class="fb-time">Just now</div>
         </div>
       </div>
-
-      <div class="fb-content" id="postText">
-        <p>Loading bio information...</p>
-      </div>
-
+      <div class="fb-content" id="postText"><p>...</p></div>
       <div class="fb-link-preview">
         <img id="previewImage" src="" alt="Preview">
         <div class="fb-link-text">
           <div class="domain">BABYBLOOMSYDNEY.COM.AU</div>
-          <div class="title" id="previewTitle">Loading Title...</div>
-          <div class="description" id="previewDesc">Loading Description...</div>
+          <div class="title" id="previewTitle">...</div>
+          <div class="description" id="previewDesc">...</div>
         </div>
       </div>
-
       <div class="fb-reactions-bar">
         <div class="fb-reactions">
           <img src="https://drive.google.com/thumbnail?id=1fYJDK5-RDUYNw7smpK0TKKBxU4suCdq6&sz=w2000-h1050" class="reaction-icons-img" alt="Reactions">
@@ -123,202 +90,135 @@
         </div>
         <div class="fb-comments-count">6 comments</div>
       </div>
-
       <div class="fb-footer">
         <div>Like</div><div>Comment</div><div>Share</div>
       </div>
     </div>
-
-    <div id="data-loader" style="margin-top:20px; color:#666; display:none;">Fetching profile details...</div>
+    <div id="data-loader">Fetching profile...</div>
   </div>
 
   <script>
-    // === CONFIG ===
     const WIX_VERIFY_URL = "https://www.babybloomsydney.com.au/_functions/verifyJobToken";
-    const GAS_DATA_URL = "https://script.google.com/macros/s/AKfycbzKGNfbn0XdJRUF8dygV-9ITjhBI_9tW7uXcTydrGHS4ygdhp3vRydedlbSG1DNNLcsww/exec"; 
+    const GAS_DATA_URL = "https://script.google.com/macros/s/AKfycbwfH7G9pX5Cv22LeRGd_40m1cVNpkzZl9jSNc5VX-WyHp5hd179HI_LGfTjxN_4602AyQ/exec"; 
     const WIX_HOME_URL = "https://www.babybloomsydney.com.au";
-
-    // Global variable to store the verified contact ID
     let globalContactId = null;
 
-    // === 1. SECURITY & POLLING LOGIC (Runs Immediately) ===
+    // 1. POLLING
     window.addEventListener('DOMContentLoaded', async () => {
         const params = new URLSearchParams(window.location.search);
         const token = params.get('token');
-
         if (!token) { denyAccess("Invalid Link"); return; }
 
         let attempts = 0;
-        const maxAttempts = 8; // Try for ~8 seconds
-
         const pollToken = async () => {
             try {
                 const response = await fetch(`${WIX_VERIFY_URL}?token=${token}`);
                 const data = await response.json();
-
                 if (data.valid === true && data.contactId) {
-                    // SUCCESS: Pass the ID to the main app logic
                     grantAccess(data.contactId);
                 } else {
-                    // FAIL: Retry logic
-                    attempts++;
-                    if (attempts < maxAttempts) {
-                        setTimeout(pollToken, 1000); 
-                    } else {
-                        denyAccess("Link Expired or Already Used");
-                    }
+                    if (++attempts < 8) setTimeout(pollToken, 1000); 
+                    else denyAccess("Link Expired or Already Used");
                 }
             } catch (err) {
-                console.error(err);
-                // If network error, we retry a few times before failing
-                attempts++;
-                if(attempts < maxAttempts) setTimeout(pollToken, 1000);
+                if (++attempts < 8) setTimeout(pollToken, 1000);
                 else denyAccess("Connection Error");
             }
         };
         pollToken();
     });
 
-    // === 2. GRANT ACCESS TRANSITION ===
-    function grantAccess(secureContactId) {
-        globalContactId = secureContactId; // Store globally
+    // 2. GRANT ACCESS
+    function grantAccess(contactId) {
+        globalContactId = contactId;
         const overlay = document.getElementById('security-overlay');
-        const app = document.getElementById('app-container');
-        
-        overlay.style.transition = "opacity 0.5s";
         overlay.style.opacity = '0';
-        
         setTimeout(() => {
             overlay.style.display = 'none';
-            app.style.display = 'flex'; // Show the app (flex to center)
-            
-            // Trigger data fetch now that we are secure
-            initializePage(secureContactId);
+            document.getElementById('app-container').style.display = 'flex';
+            initializePage(contactId);
         }, 500);
     }
 
-    // === 3. DENY ACCESS LOGIC ===
+    // 3. DENY ACCESS
     function denyAccess(reason) {
         document.getElementById('sec-spinner').style.display = 'none';
         document.getElementById('sec-title').innerText = "Access Denied";
         document.getElementById('sec-title').style.color = "#c0392b";
-        document.getElementById('sec-desc').innerHTML = `<strong>${reason}</strong><br><br>Redirecting...`;
+        document.getElementById('sec-desc').innerHTML = `<strong>${reason}</strong><br>Redirecting...`;
         setTimeout(() => { window.location.href = WIX_HOME_URL; }, 3000);
     }
 
-    // === 4. FETCH GAS DATA ===
+    // 4. FETCH DATA
     async function initializePage(contactId) {
         const loader = document.getElementById('data-loader');
-        loader.style.display = 'block';
-
         try {
-            const gasRes = await fetch(GAS_DATA_URL, {
+            const res = await fetch(GAS_DATA_URL, {
                 method: 'POST',
-                headers: { "Content-Type": "text/plain;charset=utf-8" },
                 body: JSON.stringify({ action: "fetchNannyShareParam", contactId: contactId })
             });
-
-            const response = await gasRes.json();
+            const json = await res.json();
             
-            if (response.status === 'success') {
-                loader.style.display = 'none';
-                renderPreview(response.data);
-            } else {
-                throw new Error("Profile not found");
-            }
+            // Log full debug info to console for you to see
+            console.log("GAS Response:", json); 
 
+            if (json.status === 'success') {
+                loader.style.display = 'none';
+                renderPreview(json.data);
+            } else {
+                throw new Error(json.message + (json.debug ? ` (Checked: ${json.debug.sheetIdsSeen})` : ''));
+            }
         } catch (err) {
-            loader.innerHTML = `<span style="color:red">Error loading profile: ${err.message}</span>`;
+            loader.innerHTML = `<span style="color:red">Error: ${err.message}</span>`;
+            console.error(err);
         }
     }
 
-    // === 5. RENDER LOGIC (With XSS Safety) ===
+    // 5. RENDER
     function renderPreview(data) {
-        // Safe Text Helper
-        const escapeHtml = (text) => {
-            if (!text) return '';
-            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-        };
-
-        const profilePic = data.profilePicture || 'https://randomuser.me/api/portraits/women/44.jpg';
-        const postImage = data.nanny_ad || profilePic;
-
-        document.getElementById('profilePic').src = profilePic;
-        document.getElementById('userName').textContent = data.firstName;
-        document.getElementById('previewImage').src = postImage;
+        const esc = (t) => t ? t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : '';
         
+        document.getElementById('profilePic').src = data.profilePicture || '';
+        document.getElementById('userName').textContent = data.firstName;
+        document.getElementById('previewImage').src = data.nanny_ad || data.profilePicture || '';
         document.getElementById('previewTitle').textContent = `Experienced Nanny Available | ${data.suburb}`;
         document.getElementById('previewDesc').textContent = `Hi, I'm ${data.firstName} and I'm now available to Nanny!`;
-
-        // Secure Bio Rendering
-        const safeBio = escapeHtml(data.bioNanny);
-        const formattedBio = safeBio.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
-        document.getElementById('postText').innerHTML = `<p>${formattedBio}</p>`;
+        
+        const bio = esc(data.bioNanny).replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
+        document.getElementById('postText').innerHTML = `<p>${bio}</p>`;
     }
 
-    // === 6. BUTTON EVENT LISTENERS ===
-    
-    // Copy Post Text
+    // 6. BUTTONS
     document.getElementById('copyBtn').addEventListener('click', async (e) => {
-        e.preventDefault();
         const postEl = document.getElementById('postText');
         const clone = postEl.cloneNode(true);
         clone.innerHTML = clone.innerHTML.replace(/<br\s*\/?>/gi, '\n');
-        let text = clone.textContent.trim();
-        
-        let copied = false;
-        if (navigator.clipboard) {
-            try { await navigator.clipboard.writeText(text); copied = true; } catch (e) {}
-        }
-        if (!copied) {
-            const ta = document.createElement('textarea');
-            ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
-            document.body.appendChild(ta); ta.select();
-            copied = document.execCommand('copy');
-            document.body.removeChild(ta);
-        }
-        if (copied) updateBtn(e.target, 'Post Copied', 'Copy Post');
+        const text = clone.textContent.trim();
+        await navigator.clipboard.writeText(text);
+        btnFeedback(e.target, 'Copied!', 'Copy Post');
     });
 
-    // Share Profile Link
     document.getElementById('shareBtn').addEventListener('click', async (e) => {
-        e.preventDefault();
         if (!globalContactId) return;
-
-        const nannyUrl = `https://babybloomsydney.com.au/nanny/${globalContactId}`;
-        const shareData = {
+        const url = `https://babybloomsydney.com.au/nanny/${globalContactId}`;
+        const data = {
             title: document.getElementById('previewTitle').textContent,
             text: document.getElementById('previewDesc').textContent,
-            url: nannyUrl
+            url: url
         };
-
-        if (navigator.share) {
-            try {
-                await navigator.share(shareData);
-                updateBtn(e.target, 'Shared!', 'Share Profile');
-                document.getElementById('returnBtn').style.display = 'inline-block';
-            } catch (err) {}
-        } else {
-            navigator.clipboard.writeText(nannyUrl).then(() => {
-                updateBtn(e.target, 'URL Copied!', 'Share Profile');
-            });
-        }
+        try { await navigator.share(data); } 
+        catch (e) { await navigator.clipboard.writeText(url); }
+        btnFeedback(e.target, 'Shared/Copied!', 'Share Profile');
+        document.getElementById('returnBtn').style.display = 'inline-block';
     });
 
-    // Return Button
     document.getElementById('returnBtn').addEventListener('click', () => {
-        if (globalContactId) {
-            window.location.href = `https://babybloomsydney.com.au/nanny/${globalContactId}`;
-        }
+        if (globalContactId) window.location.href = `https://babybloomsydney.com.au/nanny/${globalContactId}`;
     });
 
-    function updateBtn(btn, active, reset) {
+    function btnFeedback(btn, active, reset) {
         btn.textContent = active;
-        btn.classList.add('copied');
-        setTimeout(() => {
-            btn.textContent = reset;
-            btn.classList.remove('copied');
-        }, 1000);
+        setTimeout(() => btn.textContent = reset, 1000);
     }
   </script>
 </body>
